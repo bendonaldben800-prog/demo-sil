@@ -4,12 +4,12 @@
   "downloads": {
     "windows-x64": {
       "label": "Windows x64",
-      "url": "https://github.com/OWNER/REPO/releases/download/v0.1.0/key-monitor-win-x64.zip",
+      "url": "https://github.com/bendonaldben800-prog/demo-sil/releases/download/v0.1.0/key-monitor-win-x64.zip",
       "checksum": "sha256: replace-with-real-checksum"
     },
     "windows-arm64": {
       "label": "Windows ARM64",
-      "url": "https://github.com/OWNER/REPO/releases/download/v0.1.0/key-monitor-win-arm64.zip",
+      "url": "https://github.com/bendonaldben800-prog/demo-sil/releases/download/v0.1.0/key-monitor-win-arm64.zip",
       "checksum": "sha256: replace-with-real-checksum"
     },
     "macos-intel": {
