@@ -5,7 +5,7 @@
     "windows-x64": {
       "label": "Windows x64",
       "url": "https://github.com/bendonaldben800-prog/demo-sil/releases/download/v0.1.0/key-monitor-win-x64.zip",
-      "checksum": "sha256: replace-with-real-checksum"
+      "checksum": "sha256: 61bfe89c67719f4f67955c4b9f03e934fb52571c8ef06d8ff76ef82339464fa6  "
     },
     "windows-arm64": {
       "label": "Windows ARM64",
