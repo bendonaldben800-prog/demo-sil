@@ -1,0 +1,1 @@
+a9223dc58896e6ccc36b8cdb98ff467749bc6b212e01a457ef1540f9507b0f31  artifacts/macos/key-monitor-macos-intel.dmg

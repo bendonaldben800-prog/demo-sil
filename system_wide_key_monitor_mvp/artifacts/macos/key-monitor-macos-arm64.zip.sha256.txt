@@ -1,0 +1,1 @@
+20f85a8ca0dc9e3d76f063f587e0386c89b6ed98f3f4f459a4a4519d281d4e05  key-monitor-macos-arm64.zip

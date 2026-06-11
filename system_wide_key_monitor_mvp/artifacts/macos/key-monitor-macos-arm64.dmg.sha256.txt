@@ -1,0 +1,1 @@
+acba5ff145d89b93aae48f39e0bbfbff39a03d630508b95d72293488018513fb  artifacts/macos/key-monitor-macos-arm64.dmg

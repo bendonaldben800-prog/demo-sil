@@ -1,0 +1,108 @@
+name: Build Windows Artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Tag to use for manifest URL examples (example: v0.1.0)"
+        required: false
+        default: "v0.1.0"
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.rid }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rid: [win-x64, win-arm64]
+
+    env:
+      PROJECT_PATH: windows_key_monitor_mvp/windows_key_monitor_mvp.csproj
+      APP_NAME: key-monitor
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore $env:PROJECT_PATH
+
+      - name: Publish
+        run: |
+          dotnet publish $env:PROJECT_PATH `
+            -c Release `
+            -r ${{ matrix.rid }} `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -o artifacts/${{ matrix.rid }}
+
+      - name: Archive output
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $zipName = "$env:APP_NAME-${{ matrix.rid }}.zip"
+          Compress-Archive -Path "artifacts/${{ matrix.rid }}/*" -DestinationPath "dist/$zipName" -Force
+
+      - name: Generate SHA256
+        shell: pwsh
+        run: |
+          $zipName = "$env:APP_NAME-${{ matrix.rid }}.zip"
+          $hash = (Get-FileHash "dist/$zipName" -Algorithm SHA256).Hash.ToLower()
+          "$hash  $zipName" | Out-File "dist/$zipName.sha256.txt" -Encoding utf8
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.rid }}
+          path: |
+            dist/${{ env.APP_NAME }}-${{ matrix.rid }}.zip
+            dist/${{ env.APP_NAME }}-${{ matrix.rid }}.zip.sha256.txt
+
+      - name: Upload to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/${{ env.APP_NAME }}-${{ matrix.rid }}.zip
+            dist/${{ env.APP_NAME }}-${{ matrix.rid }}.zip.sha256.txt
+
+  manifest_hints:
+    name: Manifest Snippet
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Produce manifest snippet in job summary
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          else
+            TAG="${{ inputs.release_tag }}"
+          fi
+
+          BASE_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}"
+
+          {
+            echo "## Windows manifest values"
+            echo
+            echo "Use these URLs in download_portal/manifest.json:"
+            echo
+            echo "- windows-x64 URL: ${BASE_URL}/key-monitor-win-x64.zip"
+            echo "- windows-arm64 URL: ${BASE_URL}/key-monitor-win-arm64.zip"
+            echo
+            echo "Checksums are in uploaded files:"
+            echo
+            echo "- key-monitor-win-x64.zip.sha256.txt"
+            echo "- key-monitor-win-arm64.zip.sha256.txt"
+          } >> "$GITHUB_STEP_SUMMARY"

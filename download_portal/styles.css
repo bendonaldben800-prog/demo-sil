@@ -1,0 +1,182 @@
+:root {
+  --bg-1: #fdf7ef;
+  --bg-2: #f5efe5;
+  --text: #10221a;
+  --muted: #4f6658;
+  --brand: #0f766e;
+  --brand-2: #166534;
+  --surface: rgba(255, 255, 255, 0.76);
+  --surface-border: rgba(16, 34, 26, 0.1);
+  --shadow: 0 16px 46px rgba(30, 53, 44, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  font-family: "Manrope", sans-serif;
+  background: radial-gradient(circle at 20% 20%, var(--bg-1), var(--bg-2));
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.bg-shape {
+  position: fixed;
+  z-index: 0;
+  border-radius: 999px;
+  filter: blur(8px);
+}
+
+.bg-a {
+  width: 380px;
+  height: 380px;
+  top: -100px;
+  right: -80px;
+  background: rgba(15, 118, 110, 0.22);
+}
+
+.bg-b {
+  width: 300px;
+  height: 300px;
+  bottom: -80px;
+  left: -80px;
+  background: rgba(22, 101, 52, 0.2);
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  width: min(980px, 92vw);
+  margin: 44px auto;
+  display: grid;
+  gap: 18px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  padding: 24px;
+}
+
+.kicker {
+  margin: 0;
+  color: var(--brand-2);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 800;
+  font-size: 0.78rem;
+}
+
+h1, h2 {
+  margin: 10px 0 12px;
+  font-family: "Space Grotesk", sans-serif;
+  line-height: 1.15;
+}
+
+h1 {
+  font-size: clamp(1.8rem, 4vw, 3.1rem);
+}
+
+h2 {
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+}
+
+.subtext {
+  color: var(--muted);
+  max-width: 68ch;
+}
+
+.primary-cta {
+  margin-top: 18px;
+}
+
+.button {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--brand), #15803d);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+.button[aria-disabled="true"] {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.button.secondary {
+  background: #e7f4ef;
+  color: #0f3a30;
+}
+
+.manual-select {
+  margin-top: 18px;
+  display: grid;
+  gap: 8px;
+  max-width: 340px;
+}
+
+.manual-select label {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.manual-select select {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #c9d8cf;
+  font: inherit;
+}
+
+.download-list,
+.checksum-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.download-list li,
+.checksum-list li {
+  margin: 8px 0;
+}
+
+.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+  animation: reveal 600ms ease forwards;
+}
+
+.fade-in.delayed { animation-delay: 120ms; }
+.fade-in.delayed-2 { animation-delay: 220ms; }
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 700px) {
+  .page {
+    margin: 24px auto;
+  }
+
+  .card {
+    padding: 18px;
+    border-radius: 16px;
+  }
+}

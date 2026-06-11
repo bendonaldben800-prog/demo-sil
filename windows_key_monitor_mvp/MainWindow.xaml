@@ -1,0 +1,63 @@
+<Window x:Class="WindowsKeyMonitorMvp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:models="clr-namespace:WindowsKeyMonitorMvp.Models"
+        mc:Ignorable="d"
+        Title="System-wide Key Monitor (Windows MVP)"
+        Width="980"
+        Height="680"
+        MinWidth="840"
+        MinHeight="560">
+  <Grid Margin="16">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <StackPanel Grid.Row="0" Margin="0,0,0,10">
+      <TextBlock FontSize="22" FontWeight="Bold" Text="System-wide Key Monitor" />
+      <TextBlock Foreground="#555" TextWrapping="Wrap"
+                 Text="Metadata-only capture: key code/identifier + modifier state + active app/window title. Typed text content is not captured." />
+      <TextBlock Margin="0,4,0,0" Foreground="#555" Text="Data is stored locally in SQLite. Capture is OFF by default." />
+    </StackPanel>
+
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+      <ToggleButton x:Name="CaptureToggle"
+                    Width="180"
+                    Height="34"
+                    Content="Capture OFF"
+                    Checked="CaptureToggle_Checked"
+                    Unchecked="CaptureToggle_Unchecked" />
+      <TextBlock x:Name="StatusText" Margin="12,8,0,0" Foreground="#555" Text="Capture is OFF." />
+    </StackPanel>
+
+    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,10">
+      <Button Width="140" Height="32" Content="Clear Log" Click="ClearButton_Click" />
+      <Button Width="160" Height="32" Margin="8,0,0,0" Content="Export JSON" Click="ExportButton_Click" />
+      <TextBlock x:Name="CountText" Margin="12,8,0,0" Foreground="#555" Text="Stored events: 0" />
+    </StackPanel>
+
+    <DataGrid Grid.Row="3"
+              x:Name="EventsGrid"
+              AutoGenerateColumns="False"
+              IsReadOnly="True"
+              HeadersVisibility="Column"
+              ItemsSource="{Binding}">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" Width="170" />
+        <DataGridTextColumn Header="KeyCode" Binding="{Binding KeyCode}" Width="80" />
+        <DataGridTextColumn Header="KeyIdentifier" Binding="{Binding KeyIdentifier}" Width="120" />
+        <DataGridTextColumn Header="Cmd" Binding="{Binding ModCommand}" Width="60" />
+        <DataGridTextColumn Header="Shift" Binding="{Binding ModShift}" Width="60" />
+        <DataGridTextColumn Header="Alt" Binding="{Binding ModOption}" Width="60" />
+        <DataGridTextColumn Header="Ctrl" Binding="{Binding ModControl}" Width="60" />
+        <DataGridTextColumn Header="App" Binding="{Binding ActiveAppName}" Width="160" />
+        <DataGridTextColumn Header="Window" Binding="{Binding ActiveWindowTitle}" Width="*" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </Grid>
+</Window>
