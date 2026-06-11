@@ -1,0 +1,137 @@
+name: Build macOS Artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Tag to use for manifest URL examples (example: v0.1.0)"
+        required: false
+        default: "v0.1.0"
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            dmg_name: key-monitor-macos-arm64.dmg
+            vol_name: System Wide Key Monitor ARM64
+          - arch: x86_64
+            dmg_name: key-monitor-macos-intel.dmg
+            vol_name: System Wide Key Monitor Intel
+
+    env:
+      PROJECT_DIR: system_wide_key_monitor_mvp
+      EXECUTABLE_NAME: system_wide_key_monitor_mvp
+      APP_DISPLAY_NAME: System Wide Key Monitor
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
+
+      - name: Build executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          swift build -c release --arch "${{ matrix.arch }}"
+
+      - name: Package DMG and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd "$PROJECT_DIR"
+
+          if [[ "${{ matrix.arch }}" == "arm64" ]]; then
+            BUILD_DIR=".build/arm64-apple-macosx/release"
+          else
+            BUILD_DIR=".build/x86_64-apple-macosx/release"
+          fi
+
+          DIST_DIR="$PWD/artifacts/ci/${{ matrix.arch }}"
+          APP_DIR="$DIST_DIR/${APP_DISPLAY_NAME}.app"
+          CONTENTS_DIR="$APP_DIR/Contents"
+          MACOS_DIR="$CONTENTS_DIR/MacOS"
+          mkdir -p "$MACOS_DIR"
+
+          cp "$BUILD_DIR/$EXECUTABLE_NAME" "$MACOS_DIR/$EXECUTABLE_NAME"
+          chmod +x "$MACOS_DIR/$EXECUTABLE_NAME"
+
+          cat > "$CONTENTS_DIR/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>System Wide Key Monitor</string>
+            <key>CFBundleDisplayName</key><string>System Wide Key Monitor</string>
+            <key>CFBundleIdentifier</key><string>local.logger.system-wide-key-monitor</string>
+            <key>CFBundleVersion</key><string>0.1.0</string>
+            <key>CFBundleShortVersionString</key><string>0.1.0</string>
+            <key>CFBundleExecutable</key><string>system_wide_key_monitor_mvp</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>LSMinimumSystemVersion</key><string>13.0</string>
+          </dict>
+          </plist>
+          PLIST
+
+          DMG_PATH="$DIST_DIR/${{ matrix.dmg_name }}"
+          hdiutil create -volname "${{ matrix.vol_name }}" -srcfolder "$DIST_DIR" -ov -format UDZO "$DMG_PATH"
+          shasum -a 256 "$DMG_PATH" > "$DMG_PATH.sha256.txt"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}
+          path: |
+            system_wide_key_monitor_mvp/artifacts/ci/${{ matrix.arch }}/${{ matrix.dmg_name }}
+            system_wide_key_monitor_mvp/artifacts/ci/${{ matrix.arch }}/${{ matrix.dmg_name }}.sha256.txt
+
+      - name: Upload to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            system_wide_key_monitor_mvp/artifacts/ci/${{ matrix.arch }}/${{ matrix.dmg_name }}
+            system_wide_key_monitor_mvp/artifacts/ci/${{ matrix.arch }}/${{ matrix.dmg_name }}.sha256.txt
+
+  manifest_hints:
+    name: Manifest Snippet
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Produce manifest snippet in job summary
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          else
+            TAG="${{ inputs.release_tag }}"
+          fi
+
+          BASE_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}"
+
+          {
+            echo "## macOS manifest values"
+            echo
+            echo "Use these URLs in download_portal/manifest.json:"
+            echo
+            echo "- macos-intel URL: ${BASE_URL}/key-monitor-macos-intel.dmg"
+            echo "- macos-arm64 URL: ${BASE_URL}/key-monitor-macos-arm64.dmg"
+            echo
+            echo "Checksums are in uploaded files:"
+            echo
+            echo "- key-monitor-macos-intel.dmg.sha256.txt"
+            echo "- key-monitor-macos-arm64.dmg.sha256.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
