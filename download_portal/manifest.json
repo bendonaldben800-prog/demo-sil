@@ -10,7 +10,7 @@
     "windows-arm64": {
       "label": "Windows ARM64",
       "url": "https://github.com/bendonaldben800-prog/demo-sil/releases/download/v0.1.0/key-monitor-win-arm64.zip",
-      "checksum": "sha256: replace-with-real-checksum"
+      "checksum": "sha256: 9d834e2ae99937184770ebff5be93a594335d556dbec2dfbc2b9ba21f55250cb  "
     },
     "macos-intel": {
       "label": "macOS Intel",
