@@ -15,12 +15,12 @@
     "macos-intel": {
       "label": "macOS Intel",
       "url": "https://github.com/bendonaldben800-prog/demo-sil/releases/download/v0.1.0/key-monitor-macos-intel.dmg",
-      "checksum": "sha256: a9223dc58896e6ccc36b8cdb98ff467749bc6b212e01a457ef1540f9507b0f31"
+      "checksum": "sha256: 7f1e36cf8235d68c7336a206ca79b3cd9f0a714e6b72d4164e61f642f071451d"
     },
     "macos-arm64": {
       "label": "macOS Apple Silicon",
       "url": "https://github.com/bendonaldben800-prog/demo-sil/releases/download/v0.1.0/key-monitor-macos-arm64.dmg",
-      "checksum": "sha256: acba5ff145d89b93aae48f39e0bbfbff39a03d630508b95d72293488018513fb"
+      "checksum": "sha256: 38a6a451c882a3ccd49294d2c1db193462ecc9ba192da1809f5d50f5ce0f7d87"
     }
   }
 }
