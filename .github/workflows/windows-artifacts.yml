@@ -25,6 +25,7 @@ jobs:
     env:
       PROJECT_PATH: windows_key_monitor_mvp/windows_key_monitor_mvp.csproj
       APP_NAME: key-monitor
+      MAIN_EXE_NAME: windows_key_monitor_mvp.exe
 
     steps:
       - name: Checkout
@@ -34,6 +35,21 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
+
+      - name: Compute app version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "release") {
+            $version = "${{ github.event.release.tag_name }}"
+          } else {
+            $version = "${{ inputs.release_tag }}"
+          }
+
+          if ($version.StartsWith("v")) {
+            $version = $version.Substring(1)
+          }
+
+          "APP_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Restore
         run: dotnet restore $env:PROJECT_PATH
@@ -54,12 +70,42 @@ jobs:
           $zipName = "$env:APP_NAME-${{ matrix.rid }}.zip"
           Compress-Archive -Path "artifacts/${{ matrix.rid }}/*" -DestinationPath "dist/$zipName" -Force
 
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iscc = "C:/Program Files (x86)/Inno Setup 6/ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            throw "Inno Setup compiler not found at $iscc"
+          }
+
+          $sourceDir = (Resolve-Path "artifacts/${{ matrix.rid }}").Path
+          $outputDir = (Resolve-Path "dist").Path
+          $outputBaseFileName = "$env:APP_NAME-${{ matrix.rid }}-setup"
+
+          & $iscc `
+            "/DAppName=$env:APP_NAME" `
+            "/DAppVersion=$env:APP_VERSION" `
+            "/DMainExeName=$env:MAIN_EXE_NAME" `
+            "/DArch=${{ matrix.rid }}" `
+            "/DSourceDir=$sourceDir" `
+            "/DOutputDir=$outputDir" `
+            "/DOutputBaseFilename=$outputBaseFileName" `
+            "windows_key_monitor_mvp/scripts/installer/windows-installer.iss"
+
       - name: Generate SHA256
         shell: pwsh
         run: |
           $zipName = "$env:APP_NAME-${{ matrix.rid }}.zip"
           $hash = (Get-FileHash "dist/$zipName" -Algorithm SHA256).Hash.ToLower()
           "$hash  $zipName" | Out-File "dist/$zipName.sha256.txt" -Encoding utf8
+
+          $setupName = "$env:APP_NAME-${{ matrix.rid }}-setup.exe"
+          $setupHash = (Get-FileHash "dist/$setupName" -Algorithm SHA256).Hash.ToLower()
+          "$setupHash  $setupName" | Out-File "dist/$setupName.sha256.txt" -Encoding utf8
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
@@ -68,6 +114,8 @@ jobs:
           path: |
             dist/${{ env.APP_NAME }}-${{ matrix.rid }}.zip
             dist/${{ env.APP_NAME }}-${{ matrix.rid }}.zip.sha256.txt
+            dist/${{ env.APP_NAME }}-${{ matrix.rid }}-setup.exe
+            dist/${{ env.APP_NAME }}-${{ matrix.rid }}-setup.exe.sha256.txt
 
       - name: Upload to GitHub Release
         if: github.event_name == 'release'
@@ -76,6 +124,8 @@ jobs:
           files: |
             dist/${{ env.APP_NAME }}-${{ matrix.rid }}.zip
             dist/${{ env.APP_NAME }}-${{ matrix.rid }}.zip.sha256.txt
+            dist/${{ env.APP_NAME }}-${{ matrix.rid }}-setup.exe
+            dist/${{ env.APP_NAME }}-${{ matrix.rid }}-setup.exe.sha256.txt
 
   manifest_hints:
     name: Manifest Snippet
@@ -98,11 +148,11 @@ jobs:
             echo
             echo "Use these URLs in download_portal/manifest.json:"
             echo
-            echo "- windows-x64 URL: ${BASE_URL}/key-monitor-win-x64.zip"
-            echo "- windows-arm64 URL: ${BASE_URL}/key-monitor-win-arm64.zip"
+            echo "- windows-x64 URL: ${BASE_URL}/key-monitor-win-x64-setup.exe"
+            echo "- windows-arm64 URL: ${BASE_URL}/key-monitor-win-arm64-setup.exe"
             echo
             echo "Checksums are in uploaded files:"
             echo
-            echo "- key-monitor-win-x64.zip.sha256.txt"
-            echo "- key-monitor-win-arm64.zip.sha256.txt"
+            echo "- key-monitor-win-x64-setup.exe.sha256.txt"
+            echo "- key-monitor-win-arm64-setup.exe.sha256.txt"
           } >> "$GITHUB_STEP_SUMMARY"
